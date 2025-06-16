@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Human Bone Quiz</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(45deg, #2c3e50, #3498db);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .quiz-stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 15px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+        }
+
+        .main-content {
+            display: flex;
+            flex-wrap: wrap;
+            min-height: 600px;
+        }
+
+        .skeleton-container {
+            flex: 1;
+            min-width: 300px;
+            position: relative;
+            background: #f8f9fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .skeleton-image {
+            max-width: 90%;
+            max-height: 90vh;
+            height: auto;
+            position: relative;
+        }
+
+        .bone-label {
+            position: absolute;
+            background: rgba(255, 193, 7, 0.9);
+            color: #333;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            border: 2px solid #ffc107;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            animation: fadeIn 0.5s ease-in-out forwards;
+            z-index: 10;
+        }
+
+        .bone-label::after {
+            content: '';
+            position: absolute;
+            width: 2px;
+            height: 20px;
+            background: #333;
+            left: 50%;
+            top: 100%;
+            transform: translateX(-50%);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+            to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+
+        .input-section {
+            flex: 0 0 300px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-left: 1px solid #dee2e6;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .bone-input {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 25px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .bone-input:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 10px rgba(0,123,255,0.25);
+        }
+
+        .suggestions {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 5px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .suggestion {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.2s;
+        }
+
+        .suggestion:hover, .suggestion.highlighted {
+            background-color: #e3f2fd;
+        }
+
+        .suggestion:last-child {
+            border-bottom: none;
+        }
+
+        .progress-section {
+            margin-top: 20px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #28a745, #20c997);
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+
+        .found-bones {
+            max-height: 300px;
+            overflow-y: auto;
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            border: 1px solid #dee2e6;
+        }
+
+        .found-bone {
+            display: inline-block;
+            background: #d4edda;
+            color: #155724;
+            padding: 5px 10px;
+            margin: 2px;
+            border-radius: 15px;
+            font-size: 12px;
+            border: 1px solid #c3e6cb;
+        }
+
+        .reset-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(45deg, #dc3545, #c82333);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: transform 0.2s;
+        }
+
+        .reset-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .input-section {
+                flex: none;
+                border-left: none;
+                border-top: 1px solid #dee2e6;
+            }
+            
+            .skeleton-container {
+                min-height: 400px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .quiz-stats {
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🦴 Human Bone Quiz</h1>
+            <p>Type the names of human bones to label the skeleton!</p>
+            <div class="quiz-stats">
+                <div class="stat">
+                    <div class="stat-number" id="found-count">0</div>
+                    <div>Found</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number" id="total-count">60</div>
+                    <div>Total</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number" id="percentage">0%</div>
+                    <div>Complete</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="skeleton-container">
+                <div style="position: relative; display: inline-block;">
+                    <img src="skeleton.png"
+                          alt="Human Skeleton" 
+                          class="skeleton-image" 
+                          id="skeletonImage">
+                    
+                    <!-- Bone labels will be dynamically added here -->
+                </div>
+            </div>
+            
+            <div class="input-section">
+                <div class="input-group">
+                    <label for="boneInput">Enter Bone Name:</label>
+                    <input type="text" 
+                           id="boneInput" 
+                           class="bone-input" 
+                           placeholder="e.g., femur, skull, tibia..."
+                           autocomplete="off">
+                    <div id="suggestions" class="suggestions" style="display: none;"></div>
+                </div>
+                
+                <div class="progress-section">
+                    <label>Progress:</label>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <p id="progressText">0 of 60 bones found</p>
+                </div>
+                
+                <div class="progress-section">
+                    <label>Found Bones:</label>
+                    <div class="found-bones" id="foundBones">
+                        <p style="color: #666; font-style: italic;">Start typing to find bones...</p>
+                    </div>
+                </div>
+                
+                <button class="reset-btn" onclick="resetQuiz()">🔄 Reset Quiz</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Comprehensive list of human bones with their positions
+        const bones = {
+            // Skull bones
+            'frontal': { x: 50, y: 12, found: false },
+            'parietal': { x: 45, y: 8, found: false },
+            'temporal': { x: 35, y: 15, found: false },
+            'occipital': { x: 50, y: 5, found: false },
+            'sphenoid': { x: 50, y: 18, found: false },
+            'ethmoid': { x: 50, y: 20, found: false },
+            'nasal': { x: 50, y: 22, found: false },
+            'maxilla': { x: 48, y: 25, found: false },
+            'mandible': { x: 50, y: 28, found: false },
+            'zygomatic': { x: 42, y: 24, found: false },
+            'palatine': { x: 50, y: 26, found: false },
+            'lacrimal': { x: 46, y: 23, found: false },
+            'vomer': { x: 50, y: 24, found: false },
+            
+            // Vertebrae
+            'cervical vertebrae': { x: 50, y: 32, found: false },
+            'thoracic vertebrae': { x: 50, y: 45, found: false },
+            'lumbar vertebrae': { x: 50, y: 58, found: false },
+            'sacrum': { x: 50, y: 65, found: false },
+            'coccyx': { x: 50, y: 68, found: false },
+            
+            // Thoracic cage
+            'sternum': { x: 50, y: 40, found: false },
+            'ribs': { x: 40, y: 42, found: false },
+            'clavicle': { x: 42, y: 35, found: false },
+            'scapula': { x: 35, y: 38, found: false },
+            
+            // Upper limb
+            'humerus': { x: 25, y: 48, found: false },
+            'radius': { x: 22, y: 58, found: false },
+            'ulna': { x: 28, y: 58, found: false },
+            
+            // Hand bones
+            'carpals': { x: 20, y: 68, found: false },
+            'metacarpals': { x: 18, y: 72, found: false },
+            'phalanges': { x: 15, y: 76, found: false },
+            
+            // Pelvic girdle
+            'ilium': { x: 45, y: 62, found: false },
+            'ischium': { x: 48, y: 68, found: false },
+            'pubis': { x: 52, y: 68, found: false },
+            
+            // Lower limb
+            'femur': { x: 40, y: 78, found: false },
+            'patella': { x: 40, y: 88, found: false },
+            'tibia': { x: 38, y: 95, found: false },
+            'fibula': { x: 42, y: 95, found: false },
+            
+            // Foot bones
+            'tarsals': { x: 35, y: 105, found: false },
+            'calcaneus': { x: 38, y: 108, found: false },
+            'talus': { x: 35, y: 106, found: false },
+            'navicular': { x: 32, y: 105, found: false },
+            'cuboid': { x: 38, y: 107, found: false },
+            'cuneiforms': { x: 30, y: 106, found: false },
+            'metatarsals': { x: 28, y: 110, found: false },
+            
+            // Additional bones
+            'hyoid': { x: 50, y: 30, found: false },
+            'malleus': { x: 35, y: 16, found: false },
+            'incus': { x: 35, y: 16, found: false },
+            'stapes': { x: 35, y: 16, found: false },
+            
+            // More specific bones
+            'atlas': { x: 50, y: 31, found: false },
+            'axis': { x: 50, y: 32, found: false },
+            'xiphoid process': { x: 50, y: 50, found: false },
+            'acromion': { x: 32, y: 36, found: false },
+            'coracoid process': { x: 38, y: 36, found: false },
+            'glenoid cavity': { x: 35, y: 40, found: false },
+            'olecranon': { x: 30, y: 55, found: false },
+            'styloid process': { x: 20, y: 65, found: false },
+            'greater trochanter': { x: 42, y: 75, found: false },
+            'lesser trochanter': { x: 38, y: 76, found: false },
+            'medial malleolus': { x: 36, y: 102, found: false },
+            'lateral malleolus': { x: 44, y: 102, found: false },
+            
+            // Individual carpal bones
+            'scaphoid': { x: 22, y: 67, found: false },
+            'lunate': { x: 20, y: 68, found: false },
+            'triquetrum': { x: 18, y: 69, found: false },
+            'pisiform': { x: 18, y: 70, found: false },
+            'trapezium': { x: 22, y: 70, found: false },
+            'trapezoid': { x: 20, y: 70, found: false },
+            'capitate': { x: 19, y: 69, found: false },
+            'hamate': { x: 17, y: 70, found: false }
+        };
+
+        let foundBones = new Set();
+        let currentSuggestionIndex = -1;
+
+        const boneInput = document.getElementById('boneInput');
+        const suggestionsDiv = document.getElementById('suggestions');
+        const foundBonesDiv = document.getElementById('foundBones');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const foundCountEl = document.getElementById('found-count');
+        const totalCountEl = document.getElementById('total-count');
+        const percentageEl = document.getElementById('percentage');
+
+        // Set total count
+        totalCountEl.textContent = Object.keys(bones).length;
+
+        function normalizeString(str) {
+            return str.toLowerCase().trim().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ');
+        }
+
+        function findMatchingBones(input) {
+            const normalized = normalizeString(input);
+            if (normalized.length < 2) return [];
+            
+            return Object.keys(bones).filter(bone => {
+                const normalizedBone = normalizeString(bone);
+                return normalizedBone.includes(normalized) && !bones[bone].found;
+            }).slice(0, 5);
+        }
+
+        function showSuggestions(matches) {
+            if (matches.length === 0) {
+                suggestionsDiv.style.display = 'none';
+                return;
+            }
+
+            suggestionsDiv.innerHTML = matches.map((bone, index) => 
+                `<div class="suggestion ${index === currentSuggestionIndex ? 'highlighted' : ''}" 
+                      onclick="selectBone('${bone}')">${bone}</div>`
+            ).join('');
+            suggestionsDiv.style.display = 'block';
+        }
+
+        function selectBone(boneName) {
+            if (bones[boneName] && !bones[boneName].found) {
+                bones[boneName].found = true;
+                foundBones.add(boneName);
+                
+                // Add bone label to skeleton
+                addBoneLabel(boneName, bones[boneName].x, bones[boneName].y);
+                
+                // Update UI
+                updateFoundBonesList();
+                updateProgress();
+                
+                // Clear input and hide suggestions
+                boneInput.value = '';
+                suggestionsDiv.style.display = 'none';
+                currentSuggestionIndex = -1;
+                
+                // Check if quiz is complete
+                if (foundBones.size === Object.keys(bones).length) {
+                    setTimeout(() => {
+                        alert('🎉 Congratulations! You found all the bones!');
+                    }, 500);
+                }
+            }
+        }
+
+        function addBoneLabel(boneName, x, y) {
+            const skeletonContainer = document.querySelector('.skeleton-container > div');
+            const label = document.createElement('div');
+            label.className = 'bone-label';
+            label.textContent = boneName;
+            label.style.left = x + '%';
+            label.style.top = y + '%';
+            skeletonContainer.appendChild(label);
+        }
+
+        function updateFoundBonesList() {
+            if (foundBones.size === 0) {
+                foundBonesDiv.innerHTML = '<p style="color: #666; font-style: italic;">Start typing to find bones...</p>';
+                return;
+            }
+
+            foundBonesDiv.innerHTML = Array.from(foundBones)
+                .sort()
+                .map(bone => `<span class="found-bone">${bone}</span>`)
+                .join('');
+        }
+
+        function updateProgress() {
+            const percentage = Math.round((foundBones.size / Object.keys(bones).length) * 100);
+            progressFill.style.width = percentage + '%';
+            progressText.textContent = `${foundBones.size} of ${Object.keys(bones).length} bones found`;
+            foundCountEl.textContent = foundBones.size;
+            percentageEl.textContent = percentage + '%';
+        }
+
+        function resetQuiz() {
+            if (confirm('Are you sure you want to reset the quiz?')) {
+                // Reset bone states
+                Object.keys(bones).forEach(bone => {
+                    bones[bone].found = false;
+                });
+                
+                // Clear found bones
+                foundBones.clear();
+                
+                // Remove all bone labels
+                document.querySelectorAll('.bone-label').forEach(label => label.remove());
+                
+                // Reset UI
+                boneInput.value = '';
+                suggestionsDiv.style.display = 'none';
+                updateFoundBonesList();
+                updateProgress();
+                currentSuggestionIndex = -1;
+            }
+        }
+
+        // Event listeners
+        boneInput.addEventListener('input', function() {
+            const matches = findMatchingBones(this.value);
+            currentSuggestionIndex = -1;
+            showSuggestions(matches);
+            
+            // Auto-select if exact match
+            const normalized = normalizeString(this.value);
+            const exactMatch = Object.keys(bones).find(bone => 
+                normalizeString(bone) === normalized && !bones[bone].found
+            );
+            
+            if (exactMatch) {
+                selectBone(exactMatch);
+            }
+        });
+
+        boneInput.addEventListener('keydown', function(e) {
+            const suggestions = document.querySelectorAll('.suggestion');
+            
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                currentSuggestionIndex = Math.min(currentSuggestionIndex + 1, suggestions.length - 1);
+                showSuggestions(findMatchingBones(this.value));
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                currentSuggestionIndex = Math.max(currentSuggestionIndex - 1, -1);
+                showSuggestions(findMatchingBones(this.value));
+            } else if (e.key === 'Enter' && currentSuggestionIndex >= 0) {
+                e.preventDefault();
+                const selectedBone = suggestions[currentSuggestionIndex].textContent;
+                selectBone(selectedBone);
+            } else if (e.key === 'Escape') {
+                suggestionsDiv.style.display = 'none';
+                currentSuggestionIndex = -1;
+            }
+        });
+
+        // Hide suggestions when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.input-group')) {
+                suggestionsDiv.style.display = 'none';
+                currentSuggestionIndex = -1;
+            }
+        });
+
+        // Initialize
+        updateProgress();
+    </script>
+</body>
+</html>
