@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Human Bone Quiz</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      /* ---- page skeleton ------------------------------------------------ */
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: system-ui, Arial, sans-serif;
+        background: #f5f5f5;
+        color: #222;
+        height: 100%;
+      }
+      #app {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 1rem;
+        gap: 1rem;
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      /* ---- input -------------------------------------------------------- */
+      #answer {
+        width: 100%;
+        max-width: 25rem;
+        padding: 0.6rem 0.8rem;
+        font-size: 1.1rem;
+        border: 1px solid #aaa;
+        border-radius: 0.25rem;
+      }
+
+      /* ---- scoreboard --------------------------------------------------- */
+      #progress {
+        font-weight: 600;
+      }
+
+      /* ---- skeleton picture & overlay ---------------------------------- */
+      #skeleton-wrapper {
+        width: 100%;
+        position: relative;
+      }
+      #skeleton {
+        width: 100%;
+        height: auto;
+        display: block;
+        pointer-events: none;
+      }
+
+      /* ---- single bone label ------------------------------------------- */
+      .bone-label {
+        position: absolute;
+        transform: translate(-50%, -50%) scale(0);
+        transform-origin: 50% 50%;
+        transition: transform 0.25s ease, opacity 0.25s ease;
+        font-size: 0.75rem;
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid #222;
+        border-radius: 4px;
+        padding: 2px 4px 2px 6px;
+        white-space: nowrap;
+        opacity: 0;
+      }
+      .bone-label::before {
+        content: "";
+        position: absolute;
+        left: 2px;
+        top: 50%;
+        width: 0;
+        height: 0;
+        border: 6px solid transparent;
+        border-right-color: #222;
+        transform: translate(-100%, -50%);
+      }
+      .bone-label.show {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+      }
+
+      /* ---- mobile tweaks ----------------------------------------------- */
+      @media (max-width: 480px) {
+        .bone-label {
+          font-size: 0.6rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <h1>Human Bone Quiz</h1>
+
+      <input
+        id="answer"
+        type="text"
+        autocomplete="off"
+        placeholder="Type a bone name…"
+      />
+
+      <div id="progress">0 / 206 bones found</div>
+
+      <div id="skeleton-wrapper">
+        <img id="skeleton" src="skeleton.png" alt="Skeleton" />
+        <!-- labels are injected here -->
+      </div>
+    </div>
+
+    <script>
+      /* ------------------------------------------------------------------
+       *  Utility helpers
+       * ---------------------------------------------------------------- */
+      const titleCase = (s) =>
+        s
+          .toLowerCase()
+          .split(/[\s_-]+/)
+          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(" ");
+
+      function addBone(name, x, y, ...synonyms) {
+        const idx = bonesData.length;
+        bonesData.push({ name, x, y, found: false });
+        const all = [name, ...synonyms];
+        all.forEach((s) => {
+          const key = s.toLowerCase();
+          if (!lookup[key]) lookup[key] = new Set();
+          lookup[key].add(idx);
+        });
+      }
+
+      /* ------------------------------------------------------------------
+       *  DATA: 206 bones (same list as before)
+       * ---------------------------------------------------------------- */
+      const bonesData = [];
+      const lookup = Object.create(null);
+
+      /* ---- Axial skeleton -------------------------------------------- */
+      addBone("Frontal", 50, 6, "Frontal Bone");
+      addBone("Occipital", 50, 10, "Occipital Bone");
+      addBone("Ethmoid", 50, 8, "Ethmoid Bone");
+      addBone("Sphenoid", 50, 9, "Sphenoid Bone");
+
+      ["Left", "Right"].forEach((side, i) => {
+        const x = 46 + i * 8;
+        addBone(`${side} Parietal`, x, 7, "Parietal");
+        addBone(`${side} Temporal`, x, 11, "Temporal");
+        addBone(`${side} Maxilla`, x, 13, "Maxilla");
+        addBone(`${side} Zygomatic`, x, 12.5, "Zygomatic", "Cheekbone");
+        addBone(`${side} Nasal`, x, 12, "Nasal");
+        addBone(`${side} Lacrimal`, x, 12, "Lacrimal");
+        addBone(`${side} Palatine`, x, 14, "Palatine");
+        addBone(
+          `${side} Inferior Nasal Concha`,
+          x,
+          14.5,
+          "Inferior Nasal Concha"
+        );
+        addBone(`${side} Malleus`, x, 10.5, "Malleus");
+        addBone(`${side} Incus`, x, 10.5, "Incus");
+        addBone(`${side} Stapes`, x, 10.5, "Stapes");
+      });
+      addBone("Vomer", 50, 13.3, "Vomer");
+      addBone("Mandible", 50, 15.5, "Jaw", "Mandible");
+      addBone("Hyoid", 50, 18, "Hyoid");
+
+      for (let i = 1; i <= 7; i++)
+        addBone(`C${i}`, 50, 19 + i * 1.2, `C${i}`, "Cervical Vertebra");
+      for (let i = 1; i <= 12; i++)
+        addBone(
+          `T${i}`,
+          50,
+          27 + i * 1.2,
+          `T${i}`,
+          "Thoracic Vertebra",
+          "Vertebra"
+        );
+      for (let i = 1; i <= 5; i++)
+        addBone(
+          `L${i}`,
+          50,
+          42 + i * 1.4,
+          `L${i}`,
+          "Lumbar Vertebra",
+          "Vertebra"
+        );
+
+      addBone("Sacrum", 50, 52, "Sacrum");
+      addBone("Coccyx", 50, 57, "Coccyx");
+
+      for (let i = 1; i <= 12; i++) {
+        addBone(`Left Rib ${i}`, 45, 25 + i * 1.6, "Rib");
+        addBone(`Right Rib ${i}`, 55, 25 + i * 1.6, "Rib");
+      }
+      addBone("Sternum (Manubrium)", 50, 25, "Sternum");
+      addBone("Sternum (Body)", 50, 32, "Sternum");
+      addBone("Xiphoid Process", 50, 38, "Xiphoid");
+
+      /* ---- Appendicular skeleton ------------------------------------- */
+      ["Left", "Right"].forEach((side, i) => {
+        const x = 30 + i * 40;
+        addBone(`${side} Clavicle`, x, 20, "Clavicle", "Collarbone");
+        addBone(`${side} Scapula`, x - 4 + i * 8, 23, "Scapula", "Shoulder");
+        addBone(`${side} Humerus`, x, 30, "Humerus");
+        addBone(`${side} Radius`, x + 2, 38, "Radius");
+        addBone(`${side} Ulna`, x - 2, 38, "Ulna");
+
+        const carpals = [
+          "Scaphoid",
+          "Lunate",
+          "Triquetrum",
+          "Pisiform",
+          "Trapezium",
+          "Trapezoid",
+          "Capitate",
+          "Hamate",
+        ];
+        carpals.forEach((c, idx) =>
+          addBone(`${side} ${c}`, x - 4 + idx, 46, c)
+        );
+
+        for (let d = 1; d <= 5; d++)
+          addBone(`${side} Metacarpal ${d}`, x - 6 + d * 2, 51, "Metacarpal");
+
+        const rows = [
+          { part: "Proximal", y: 55 },
+          { part: "Middle", y: 58 },
+          { part: "Distal", y: 61 },
+        ];
+        for (let d = 1; d <= 5; d++) {
+          rows.forEach(({ part, y }) => {
+            if (d === 1 && part === "Middle") return;
+            addBone(
+              `${side} ${part} Phalanx ${d}`,
+              x - 6 + d * 2,
+              y,
+              "Phalanx",
+              "Phalanges"
+            );
+          });
+        }
+      });
+
+      addBone("Left Hip (Os Coxae)", 40, 60, "Hip", "Os Coxae", "Ilium");
+      addBone("Right Hip (Os Coxae)", 60, 60, "Hip", "Os Coxae", "Ilium");
+
+      ["Left", "Right"].forEach((side, i) => {
+        const x = 40 + i * 20;
+        addBone(`${side} Femur`, x, 72, "Femur");
+        addBone(`${side} Patella`, x, 78, "Patella");
+        addBone(`${side} Tibia`, x - 2, 84, "Tibia");
+        addBone(`${side} Fibula`, x + 2, 84, "Fibula");
+
+        const tarsals = [
+          "Talus",
+          "Calcaneus",
+          "Navicular",
+          "Medial Cuneiform",
+          "Intermediate Cuneiform",
+          "Lateral Cuneiform",
+          "Cuboid",
+        ];
+        tarsals.forEach((t, idx) =>
+          addBone(`${side} ${t}`, x - 4 + idx, 90, t)
+        );
+
+        for (let d = 1; d <= 5; d++)
+          addBone(`${side} Metatarsal ${d}`, x - 6 + d * 2, 93, "Metatarsal");
+
+        const rows = [
+          { part: "Proximal", y: 95 },
+          { part: "Middle", y: 97 },
+          { part: "Distal", y: 99 },
+        ];
+        for (let d = 1; d <= 5; d++) {
+          rows.forEach(({ part, y }) => {
+            if (d === 1 && part === "Middle") return;
+            addBone(
+              `${side} ${part} Phalanx ${d}`,
+              x - 6 + d * 2,
+              y,
+              "Phalanx",
+              "Phalanges"
+            );
+          });
+        }
+      });
+
+      /* ------------------------------------------------------------------
+       *  IMAGE-SPECIFIC HORIZONTAL MAPPING
+       * ---------------------------------------------------------------- */
+      const IMG_SCALE_X = 0.57; // skeleton width ≈ 57 % of canvas width
+      const IMG_OFFSET_X = 50 * (1 - IMG_SCALE_X); // ≈ 21.5 %
+      const mapX = (oldX) => IMG_OFFSET_X + oldX * IMG_SCALE_X;
+
+      /* ------------------------------------------------------------------
+       *  Build the overlay labels
+       * ---------------------------------------------------------------- */
+      const wrapper = document.getElementById("skeleton-wrapper");
+      bonesData.forEach((b) => {
+        const div = document.createElement("div");
+        div.className = "bone-label";
+        div.style.left = `${mapX(b.x)}%`;
+        div.style.top = `${b.y}%`;
+        div.textContent = b.name;
+        b.el = div;
+        wrapper.appendChild(div);
+      });
+
+      /* ------------------------------------------------------------------
+       *  Quiz logic
+       * ---------------------------------------------------------------- */
+      const answerInput = document.getElementById("answer");
+      const progress = document.getElementById("progress");
+      let foundCount = 0;
+
+      function updateProgress() {
+        progress.textContent = `${foundCount} / 206 bones found`;
+      }
+
+      answerInput.addEventListener("input", () => {
+        const guess = answerInput.value.trim().toLowerCase();
+        if (!guess || !lookup[guess]) return;
+
+        lookup[guess].forEach((idx) => {
+          const bone = bonesData[idx];
+          if (!bone.found) {
+            bone.found = true;
+            foundCount += 1;
+            bone.el.classList.add("show");
+          }
+        });
+
+        answerInput.value = "";
+        updateProgress();
+
+        if (foundCount === bonesData.length) {
+          alert("Congratulations – you have labelled every bone!");
+        }
+      });
+
+      updateProgress();
+    </script>
+  </body>
+</html>
